@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mobile Camera Access</title>
+</head>
+<body>
+    <h1>Camera Feed</h1>
+    <video id="video" width="100%" height="auto" autoplay></video>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <script>
+        // Access the camera
+        navigator.mediaDevices.getUserMedia({ video: true })
+        .then(function(stream) {
+            var video = document.getElementById('video');
+            video.srcObject = stream;
+        })
+        .catch(function(err) {
+            console.log("An error occurred: " + err);
+        });
+
+        // Capture video frame
+        function captureFrame() {
+            var video = document.getElementById('video');
+            var canvas = document.getElementById('canvas');
+            var context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL('image/png');
+        }
+
+        // Send captured frame to Streamlit
+        function sendFrame() {
+            var frame = captureFrame();
+            var xhr = new XMLHttpRequest();
+            xhr.open('POST', '/upload_frame', true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send(JSON.stringify({ image: frame }));
+        }
+
+        // Capture and send frame every second
+        setInterval(sendFrame, 1000);
+    </script>
+</body>
+</html>
